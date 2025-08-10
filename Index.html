@@ -1,1 +1,135 @@
+<!DOCTYPE html><html>
+<head>
+<title>Slushie Sugar & Alcohol Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f7f7f7;
+    }
+    h1 {
+        text-align: center;
+        font-size: 1.5em;
+    }
+    .calculator {
+        max-width: 400px;
+        margin: auto;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+        display: block;
+        margin-top: 10px;
+        font-size: 1em;
+    }
+    input, select, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 1em;
+    }
+    button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        margin-top: 15px;
+        font-size: 1.1em;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    .result {
+        margin-top: 15px;
+        background: #eef;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 1.1em;
+    }
+</style>
+</head>
+<body><h1>Slushie Sugar & Alcohol Calculator</h1>
+<div class="calculator">
+    <label>Total Drink Size (oz):</label>
+    <input type="number" id="totalOz" placeholder="e.g., 64"><label>Target Sugar %:</label>
+<input type="number" id="sugarPercent" placeholder="e.g., 8" step="0.1">
 
+<label>Sugar per oz of Syrup (g):</label>
+<input type="number" id="sugarPerOz" value="23" step="0.1">
+
+<label>Is this an alcoholic drink?</label>
+<select id="isAlcoholic" onchange="toggleAlcoholFields()">
+    <option value="no">No</option>
+    <option value="yes">Yes</option>
+</select>
+
+<div id="alcoholFields" style="display:none;">
+    <label>Alcohol % of Spirit (ABV):</label>
+    <input type="number" id="alcoholABV" placeholder="e.g., 40" step="0.1">
+
+    <label>Target Alcohol % in Slushie:</label>
+    <input type="number" id="targetABV" placeholder="e.g., 5" step="0.1">
+</div>
+
+<button onclick="calculate()">Calculate</button>
+
+<div class="result" id="result"></div>
+
+</div><script>
+function toggleAlcoholFields() {
+    const isAlcoholic = document.getElementById('isAlcoholic').value;
+    document.getElementById('alcoholFields').style.display = isAlcoholic === 'yes' ? 'block' : 'none';
+}
+
+function roundToHalf(num) {
+    return Math.round(num * 2) / 2;
+}
+
+function calculate() {
+    let totalOz = parseFloat(document.getElementById('totalOz').value);
+    let sugarPercent = parseFloat(document.getElementById('sugarPercent').value) / 100;
+    let sugarPerOz = parseFloat(document.getElementById('sugarPerOz').value);
+    let isAlcoholic = document.getElementById('isAlcoholic').value === 'yes';
+    let alcoholABV = isAlcoholic ? parseFloat(document.getElementById('alcoholABV').value) / 100 : 0;
+    let targetABV = isAlcoholic ? parseFloat(document.getElementById('targetABV').value) / 100 : 0;
+    let gramsPerOz = 29.57; // water density assumption
+
+    if (isNaN(totalOz) || isNaN(sugarPercent) || isNaN(sugarPerOz)) {
+        document.getElementById('result').innerHTML = "Please fill in all required fields.";
+        return;
+    }
+
+    if (isAlcoholic && (isNaN(alcoholABV) || isNaN(targetABV))) {
+        document.getElementById('result').innerHTML = "Please fill in all alcohol fields for alcoholic drinks.";
+        return;
+    }
+
+    // Sugar calculations
+    let totalGrams = totalOz * gramsPerOz;
+    let targetSugarGrams = totalGrams * sugarPercent;
+    let syrupOz = targetSugarGrams / sugarPerOz;
+
+    // Alcohol calculations
+    let alcoholOz = isAlcoholic ? (targetABV * totalOz) / alcoholABV : 0;
+
+    // Water is whatever is left after syrup and alcohol
+    let waterOz = totalOz - syrupOz - alcoholOz;
+
+    if (waterOz < 0) {
+        document.getElementById('result').innerHTML = "Error: Not enough volume for water. Adjust percentages.";
+        return;
+    }
+
+    document.getElementById('result').innerHTML =
+        `<strong>Syrup:</strong> ${roundToHalf(syrupOz)} oz<br>` +
+        (isAlcoholic ? `<strong>Alcohol:</strong> ${roundToHalf(alcoholOz)} oz<br>` : "") +
+        `<strong>Water:</strong> ${roundToHalf(waterOz)} oz`;
+}
+</script></body>
+</html>
